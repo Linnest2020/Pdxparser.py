@@ -106,6 +106,10 @@ class PdxParser:
                     value_walk = True
                     block_value,block_id = self.parse(start=index+1)
                     index = block_id
+                    if value:
+                        block_value = [value,block_value]
+                        value = ""
+                        print(value)
                     if isinstance(obj[key_stack[-1]],list):
                         if not obj[key_stack[-1]][-1]:
                             obj[key_stack[-1]][-1] = block_value
@@ -181,8 +185,7 @@ class Pdxwriter:# inspired by jomini.js
         :param header: header before {}
         :type header: Union[str,int,float]
         """
-        self.tabbed_write()
-        self.text +=  str(header)
+        self.text +=  self.operator + str(header)
     def write_string(self,string:Union[str,int,float]):
         """
         write_string Write key or value
@@ -267,6 +270,15 @@ class Pdxwriter:# inspired by jomini.js
                         self.operator = item[0]
                         self.write_string(item[1])
                         self.op_reset()
+                    elif len(item) == 2 \
+                        and isinstance(item[0],str) and isinstance(item[1],list):
+                        self.write_header(item[0])
+                        self.operator = ""
+                        self.array_start()
+                        self.op_reset()
+                        for arr_items in item[1]:
+                            self.write_string(arr_items)
+                        self.array_end()
             elif isinstance(value[0],dict):
                 for item in value:
                     self.write_string(key)
@@ -280,6 +292,15 @@ class Pdxwriter:# inspired by jomini.js
                 self.operator = value[0]
                 self.write_string(value[1])
                 self.op_reset()
+            elif len(value) == 2 \
+                and isinstance(value[0],str) and isinstance(value[1],list):
+                self.write_header(value[0])
+                self.operator = ""
+                self.array_start()
+                self.op_reset()
+                for arr_items in value[1]:
+                    self.write_string(arr_items)
+                self.array_end()
             else:
                 self.array_start()
                 for item in value:
@@ -303,9 +324,7 @@ class Pdxwriter:# inspired by jomini.js
         return self.text
     def dump(self,pdxinput:Union[Dict,PdxParser],ambigouous:Container[str]=()) -> str:
         """
-        dump Dump in classical
-
-        _extended_summary_
+        dump Standard dump
 
         :param pdxinput: And be PdxParser or Dict
         :type pdxinput: Union[Dict,PdxParser]
@@ -325,7 +344,8 @@ class Pdxwriter:# inspired by jomini.js
 
 
 if __name__ == "__main__":
-    TEST = "some_trigger = { AND = {a>b a<=c a!=d a = e a >= f a !=g} } "
+    TEST =\
+         "some_trigger = { AND = {a>b a<=c a!=d a = e a >= f a !=g} color  = hsv360{0.1 0.1 0.1}  }"
     PP = PdxParser(TEST)
     pdx_dict = PP.parse()
     print("TEST:",TEST)
@@ -335,4 +355,6 @@ if __name__ == "__main__":
     dump_test = pdxwriter.dump(pdx_dict,PP.ambigouous)
     print("Dump: ",dump_test)
     pdx_reparse_dict = PdxParser(dump_test).parse()
+    print(pdx_reparse_dict)
     print("Reparse comparing, Older is Newer?: ",pdx_reparse_dict == pdx_dict)
+    
