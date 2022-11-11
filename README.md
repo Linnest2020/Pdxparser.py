@@ -1,5 +1,5 @@
 # Pdxparser.py
-Every Pdx Modder desired to make a parser to parse pdx's strange language, so do I.
+Every Pdx Modder desired to make a parser to parse paradox's strange language, so do I.
 
 This python file desired to parse the paradox language into dict to automatically process.
 Recommend to Use it in a Jupyter Notebook to process your paradox text file interactively.
